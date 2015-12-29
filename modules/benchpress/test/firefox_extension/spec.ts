@@ -25,12 +25,10 @@ describe('firefox extension', function() {
         .then(function() { console.log('started measuring perf'); });
 
     browser.executeAsyncScript('setTimeout(arguments[0], 1000);');
-
     browser.executeScript('window.forceGC()');
 
     browser.executeAsyncScript('var cb = arguments[0]; window.getProfile(cb);')
         .then(function(profile) {
-          console.log('>>' + JSON.stringify(profile));
           assertEventsContainsName(profile, 'gc');
           assertEventsContainsName(profile, 'script');
         });
