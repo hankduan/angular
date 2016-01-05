@@ -57,6 +57,7 @@ const kServedPaths = [
   'playground/src/upgrade',
   'playground/src/zippy_component',
   'playground/src/async',
+  'playground/src/slow_init',
   'playground/src/material/button',
   'playground/src/material/checkbox',
   'playground/src/material/dialog',
