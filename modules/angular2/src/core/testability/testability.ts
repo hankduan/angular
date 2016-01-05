@@ -26,21 +26,24 @@ export class Testability {
   _callbacks: Function[] = [];
   /** @internal */
   _isAngularEventPending: boolean = false;
-  constructor(_ngZone: NgZone) { this._watchAngularEvents(_ngZone); }
+  /** @internal */
+  _ngZone: NgZone = null;
+  constructor(_ngZone: NgZone) {
+    this._ngZone = _ngZone;
+    this._watchAngularEvents();
+  }
 
   /** @internal */
-  _watchAngularEvents(_ngZone: NgZone): void {
-    ObservableWrapper.subscribe(_ngZone.onTurnStart, (_) => {
+  _watchAngularEvents(): void {
+    ObservableWrapper.subscribe(this._ngZone.onTurnStart, (_) => {
       this._didWork = true;
       this._isAngularEventPending = true;
     });
 
-    _ngZone.runOutsideAngular(() => {
-      ObservableWrapper.subscribe(_ngZone.onEventDone, (_) => {
-        if (!_ngZone.hasPendingTimers) {
-          this._isAngularEventPending = false;
-          this._runCallbacksIfReady();
-        }
+    this._ngZone.runOutsideAngular(() => {
+      ObservableWrapper.subscribe(this._ngZone.onEventDone, (_) => {
+        this._isAngularEventPending = false;
+        this._runCallbacksIfReady();
       });
     });
   }
@@ -60,7 +63,7 @@ export class Testability {
     return this._pendingCount;
   }
 
-  isStable(): boolean { return this._pendingCount == 0 && !this._isAngularEventPending; }
+  isStable(): boolean { return !this.isAngularEventPending() && this._pendingCount == 0; }
 
   /** @internal */
   _runCallbacksIfReady(): void {
@@ -87,7 +90,9 @@ export class Testability {
 
   // This only accounts for ngZone, and not pending counts. Use `whenStable` to
   // check for stability.
-  isAngularEventPending(): boolean { return this._isAngularEventPending; }
+  isAngularEventPending(): boolean {
+    return this._isAngularEventPending || this._ngZone.hasPendingTimers;
+  }
 
   findBindings(using: any, provider: string, exactMatch: boolean): any[] {
     // TODO(juliemr): implement.
